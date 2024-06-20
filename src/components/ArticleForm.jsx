@@ -45,7 +45,6 @@ function ArticleForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            
             const { category, ...dataWithoutCategory } = articleData;
             const categoryId = parseInt(category);
 
@@ -58,8 +57,15 @@ function ArticleForm() {
                 ...dataWithoutCategory,
                 categoryId,
             });
-            
-            setArticles([...articles, response.data]);
+
+            // Aggiorna correttamente la lista degli articoli includendo il nuovo articolo
+            setArticles((prevArticles) => {
+                const updatedArticles = [response.data, ...prevArticles];
+                // Ordina per ID decrescente
+                updatedArticles.sort((a, b) => b.id - a.id);
+                return updatedArticles;
+            });
+
             setArticleData(defaultArticleData);
             setFileInput('');
         } catch (error) {
@@ -123,8 +129,16 @@ function ArticleForm() {
                 </FormGroup>
 
                 <FormGroup>
-                    <Label for="image">Immagine</Label>
-                    <Input id="image" name="image" type="file" onChange={handleChange} />
+                    <Label for="image">Immagine (URL)</Label>
+                    <Input
+                        id="image"
+                        name="image"
+                        type="text"
+                        placeholder="Inserisci l'URL dell'immagine"
+                        value={articleData.image}
+                        onChange={handleChange}
+                        required
+                    />
                 </FormGroup>
 
                 <FormGroup>

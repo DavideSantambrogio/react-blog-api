@@ -9,7 +9,11 @@ function ArticleList() {
         const fetchArticles = async () => {
             try {
                 const response = await axios.get('http://localhost:3000/api/posts');
-                setArticles(response.data.data); // Assuming your API returns an object with a 'data' array
+
+                const fetchedArticles = response.data.data;
+
+                fetchedArticles.sort((a, b) => b.id - a.id);
+                setArticles(fetchedArticles);
             } catch (error) {
                 console.error('Errore durante il recupero dei post:', error);
             }
@@ -18,9 +22,22 @@ function ArticleList() {
         fetchArticles();
     }, []);
 
-    const handleConfirmDelete = (indexToDelete) => {
-        // Implement your delete logic here
-        console.log(`Deleting article at index ${indexToDelete}`);
+    const handleConfirmDelete = async (articleId, indexToDelete) => {
+        try {
+
+            await axios.delete(`http://localhost:3000/api/posts/${articleId}`);
+
+            // Rimuovi l'articolo dalla lista locale
+            setArticles((prevArticles) => {
+                const updatedArticles = [...prevArticles];
+                updatedArticles.splice(indexToDelete, 1);
+                return updatedArticles;
+            });
+
+            console.log(`Articolo con ID ${articleId} eliminato con successo.`);
+        } catch (error) {
+            console.error(`Errore durante l'eliminazione dell'articolo con ID ${articleId}:`, error);
+        }
     };
 
     return (
@@ -40,7 +57,7 @@ function ArticleList() {
                             <strong>Pubblicato:</strong> {article.published ? 'Sì' : 'No'}
                         </CardText>
 
-                        <Button color="danger" onClick={() => handleConfirmDelete(index)}>Rimuovi</Button>
+                        <Button color="danger" onClick={() => handleConfirmDelete(article.id, index)}>Rimuovi</Button>
                     </CardBody>
                 </Card>
             ))}
