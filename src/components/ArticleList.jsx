@@ -24,9 +24,12 @@ function ArticleList() {
                 <Card key={`article-${index}`} className="mb-3 col-6">
                     <CardBody>
                         <CardTitle tag="h5">{article.title}</CardTitle>
+                        <div className='ratio ratio-16x9 mb-3 '>
+                            <img src={article.image} alt="article" className='object-fit-cover' />
+                        </div>
 
-                        {article.image && <img src={article.image} alt="article" className='img-fluid mb-3' />}
-                        
+
+
                         <CardText>
                             <strong>Contenuto:</strong> {article.content}<br />
                             <strong>Categoria:</strong> {article.category.name}<br />

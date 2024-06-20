@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Form, FormGroup, Label, Input, Button } from 'reactstrap';
+import React, { useState, useEffect } from 'react';
+import { Form, FormGroup, Label, Input, Button, Row, Col } from 'reactstrap';
 import ArticleList from './ArticleList';
 
 const defaultArticleData = {
@@ -11,13 +11,48 @@ const defaultArticleData = {
     published: false,
 };
 
-const tagOptions = ['Tag 1', 'Tag 2', 'Tag 3'];
-const categoryOptions = ['Categoria 1', 'Categoria 2', 'Categoria 3'];
-
 function ArticleForm() {
     const [articles, setArticles] = useState([]);
     const [articleData, setArticleData] = useState(defaultArticleData);
     const [fileInput, setFileInput] = useState('');
+    const [tagOptions, setTagOptions] = useState([]);
+    const [categoryOptions, setCategoryOptions] = useState([]);
+
+    useEffect(() => {
+        // Funzione per caricare le categorie dal backend
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/categories');
+                if (response.ok) {
+                    const data = await response.json();
+                    setCategoryOptions(data);
+                } else {
+                    console.error('Errore nel recupero delle categorie:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Errore durante la chiamata API:', error);
+            }
+        };
+
+        // Funzione per caricare i tag dal backend
+        const fetchTags = async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/tags');
+                if (response.ok) {
+                    const data = await response.json();
+                    setTagOptions(data);
+                } else {
+                    console.error('Errore nel recupero dei tags:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Errore durante la chiamata API:', error);
+            }
+        };
+
+        // Chiamate API per caricare categorie e tags
+        fetchCategories();
+        fetchTags();
+    }, []); // Empty dependency array ensures this runs only once on component mount
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -27,7 +62,7 @@ function ArticleForm() {
     };
 
     const removeArticle = (indexToDelete) => {
-        setArticles(array => array.filter((_, i) => i !== indexToDelete));
+        setArticles((prevArticles) => prevArticles.filter((_, i) => i !== indexToDelete));
     };
 
     const handleChange = (e) => {
@@ -35,12 +70,12 @@ function ArticleForm() {
 
         if (type === 'checkbox') {
             if (name === 'published') {
-                setArticleData(prevData => ({
+                setArticleData((prevData) => ({
                     ...prevData,
                     [name]: checked,
                 }));
             } else {
-                setArticleData(prevData => ({
+                setArticleData((prevData) => ({
                     ...prevData,
                     tags: {
                         ...prevData.tags,
@@ -48,15 +83,15 @@ function ArticleForm() {
                     },
                 }));
             }
-        } else if (type === 'file') {           
+        } else if (type === 'file') {
             const file = files[0];
-            setArticleData(prevData => ({
+            setArticleData((prevData) => ({
                 ...prevData,
-                [name]: URL.createObjectURL(file), 
+                [name]: URL.createObjectURL(file),
             }));
             setFileInput(file.name);
         } else {
-            setArticleData(prevData => ({
+            setArticleData((prevData) => ({
                 ...prevData,
                 [name]: value,
             }));
@@ -81,12 +116,7 @@ function ArticleForm() {
 
                 <FormGroup>
                     <Label for="image">Immagine</Label>
-                    <Input
-                        id="image"
-                        name="image"
-                        type="file"
-                        onChange={handleChange}
-                    />                    
+                    <Input id="image" name="image" type="file" onChange={handleChange} />
                 </FormGroup>
 
                 <FormGroup>
@@ -113,9 +143,9 @@ function ArticleForm() {
                         required
                     >
                         <option value="">Seleziona una categoria</option>
-                        {categoryOptions.map((category, index) => (
-                            <option key={index} value={category}>
-                                {category}
+                        {categoryOptions.map((category) => (
+                            <option key={category.id} value={category.id}>
+                                {category.name}
                             </option>
                         ))}
                     </Input>
@@ -123,19 +153,23 @@ function ArticleForm() {
 
                 <FormGroup tag="fieldset">
                     <Label>Tag</Label>
-                    {tagOptions.map((tag, index) => (
-                        <FormGroup check key={index}>
-                            <Label check>
-                                <Input
-                                    type="checkbox"
-                                    name={tag}
-                                    checked={articleData.tags[tag] || false}
-                                    onChange={handleChange}
-                                />
-                                {tag}
-                            </Label>
-                        </FormGroup>
-                    ))}
+                    <Row>
+                        {tagOptions.map((tag) => (
+                            <Col key={tag.id} sm={4}>
+                                <FormGroup check>
+                                    <Label check>
+                                        <Input
+                                            type="checkbox"
+                                            name={tag.name}
+                                            checked={articleData.tags[tag.name] || false}
+                                            onChange={handleChange}
+                                        />
+                                        {tag.name}
+                                    </Label>
+                                </FormGroup>
+                            </Col>
+                        ))}
+                    </Row>
                 </FormGroup>
 
                 <FormGroup switch>
@@ -147,9 +181,11 @@ function ArticleForm() {
                     />
                     <Label check>Pubblica</Label>
                 </FormGroup>
-                <Button type="submit" color="success">Aggiungi Articolo</Button>
+                <Button type="submit" color="success">
+                    Aggiungi Articolo
+                </Button>
             </Form>
-            
+
             <ArticleList articles={articles} removeArticle={removeArticle} />
         </>
     );
