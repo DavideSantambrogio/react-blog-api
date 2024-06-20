@@ -4,15 +4,15 @@ import ArticleForm from './components/ArticleForm';
 function App() {
   const [isWhiteBackground, setIsWhiteBackground] = useState(true);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setIsWhiteBackground(prev => !prev);
-    }, 5000);
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     setIsWhiteBackground(prev => !prev);
+  //   }, 5000);
 
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
+  //   return () => {
+  //     clearInterval(intervalId);
+  //   };
+  // }, []);
 
   const backgroundStyle = {
     backgroundColor: isWhiteBackground ? '#ffffff' : '#000000',
