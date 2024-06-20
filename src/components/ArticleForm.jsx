@@ -7,7 +7,7 @@ const defaultArticleData = {
     title: '',
     image: '',
     content: '',
-    category: '',
+    categoryId: '',
     tags: {},
     published: false,
 };
@@ -20,7 +20,6 @@ function ArticleForm() {
     const [categoryOptions, setCategoryOptions] = useState([]);
 
     useEffect(() => {
-        // Funzione per caricare le categorie dal backend
         const fetchCategories = async () => {
             try {
                 const response = await axios.get('http://localhost:3000/api/categories');
@@ -30,7 +29,6 @@ function ArticleForm() {
             }
         };
 
-        // Funzione per caricare i tag dal backend
         const fetchTags = async () => {
             try {
                 const response = await axios.get('http://localhost:3000/api/tags');
@@ -40,15 +38,27 @@ function ArticleForm() {
             }
         };
 
-        // Chiamate API per caricare categorie e tags al mount del componente
         fetchCategories();
         fetchTags();
-    }, []); // Empty dependency array ensures this runs only once on component mount
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:3000/api/posts', articleData);
+            
+            const { category, ...dataWithoutCategory } = articleData;
+            const categoryId = parseInt(category);
+
+            console.log('Dati inviati:', {
+                ...dataWithoutCategory,
+                categoryId,
+            });
+
+            const response = await axios.post('http://localhost:3000/api/posts', {
+                ...dataWithoutCategory,
+                categoryId,
+            });
+            
             setArticles([...articles, response.data]);
             setArticleData(defaultArticleData);
             setFileInput('');
@@ -87,9 +97,11 @@ function ArticleForm() {
             }));
             setFileInput(file.name);
         } else {
+            // Converti categoryId da stringa a numero
+            const numericValue = name === 'category' ? parseInt(value) : value;
             setArticleData((prevData) => ({
                 ...prevData,
-                [name]: value,
+                [name]: numericValue,
             }));
         }
     };
@@ -177,6 +189,7 @@ function ArticleForm() {
                     />
                     <Label check>Pubblica</Label>
                 </FormGroup>
+
                 <Button type="submit" color="success">
                     Aggiungi Articolo
                 </Button>
