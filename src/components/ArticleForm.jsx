@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, FormGroup, Label, Input, Button, Row, Col } from 'reactstrap';
 import ArticleList from './ArticleList';
+import axios from 'axios';
 
 const defaultArticleData = {
     title: '',
@@ -22,43 +23,38 @@ function ArticleForm() {
         // Funzione per caricare le categorie dal backend
         const fetchCategories = async () => {
             try {
-                const response = await fetch('http://localhost:3000/api/categories');
-                if (response.ok) {
-                    const data = await response.json();
-                    setCategoryOptions(data);
-                } else {
-                    console.error('Errore nel recupero delle categorie:', response.statusText);
-                }
+                const response = await axios.get('http://localhost:3000/api/categories');
+                setCategoryOptions(response.data);
             } catch (error) {
-                console.error('Errore durante la chiamata API:', error);
+                console.error('Errore nel recupero delle categorie:', error.message);
             }
         };
 
         // Funzione per caricare i tag dal backend
         const fetchTags = async () => {
             try {
-                const response = await fetch('http://localhost:3000/api/tags');
-                if (response.ok) {
-                    const data = await response.json();
-                    setTagOptions(data);
-                } else {
-                    console.error('Errore nel recupero dei tags:', response.statusText);
-                }
+                const response = await axios.get('http://localhost:3000/api/tags');
+                setTagOptions(response.data);
             } catch (error) {
-                console.error('Errore durante la chiamata API:', error);
+                console.error('Errore nel recupero dei tags:', error.message);
             }
         };
 
-        // Chiamate API per caricare categorie e tags
+        // Chiamate API per caricare categorie e tags al mount del componente
         fetchCategories();
         fetchTags();
     }, []); // Empty dependency array ensures this runs only once on component mount
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setArticles([...articles, articleData]);
-        setArticleData(defaultArticleData);
-        setFileInput('');
+        try {
+            const response = await axios.post('http://localhost:3000/api/posts', articleData);
+            setArticles([...articles, response.data]);
+            setArticleData(defaultArticleData);
+            setFileInput('');
+        } catch (error) {
+            console.error('Errore durante l\'aggiunta dell\'articolo:', error.message);
+        }
     };
 
     const removeArticle = (indexToDelete) => {
