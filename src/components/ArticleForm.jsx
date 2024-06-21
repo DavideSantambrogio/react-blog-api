@@ -8,7 +8,7 @@ const defaultArticleData = {
     image: '',
     content: '',
     categoryId: '',
-    tags: {},
+    tags: [],
     published: false,
 };
 
@@ -18,6 +18,7 @@ function ArticleForm() {
     const [fileInput, setFileInput] = useState('');
     const [tagOptions, setTagOptions] = useState([]);
     const [categoryOptions, setCategoryOptions] = useState([]);
+    const [showAlert, setShowAlert] = useState(false); // Stato per mostrare l'alert
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -47,27 +48,25 @@ function ArticleForm() {
         try {
             const { category, ...dataWithoutCategory } = articleData;
             const categoryId = parseInt(category);
-
-            console.log('Dati inviati:', {
-                ...dataWithoutCategory,
-                categoryId,
-            });
+            const tagIds = articleData.tags.map(tag => tag.id); // Estrae gli ID dai tag selezionati
 
             const response = await axios.post('http://localhost:3000/api/posts', {
                 ...dataWithoutCategory,
                 categoryId,
+                tagIds,
             });
 
-            // Aggiorna correttamente la lista degli articoli includendo il nuovo articolo
             setArticles((prevArticles) => {
                 const updatedArticles = [response.data, ...prevArticles];
-                // Ordina per ID decrescente
                 updatedArticles.sort((a, b) => b.id - a.id);
                 return updatedArticles;
             });
 
             setArticleData(defaultArticleData);
             setFileInput('');
+            setShowAlert(true); // Mostra l'alert quando il post è stato pubblicato
+            setTimeout(() => setShowAlert(false), 3000); // Nasconde l'alert dopo 3 secondi
+
         } catch (error) {
             console.error('Errore durante l\'aggiunta dell\'articolo:', error.message);
         }
@@ -87,13 +86,19 @@ function ArticleForm() {
                     [name]: checked,
                 }));
             } else {
-                setArticleData((prevData) => ({
-                    ...prevData,
-                    tags: {
-                        ...prevData.tags,
-                        [name]: checked,
-                    },
-                }));
+                // Gestisci selezione/deselezione dei tag
+                const selectedTag = tagOptions.find(tag => tag.name === name);
+                if (checked) {
+                    setArticleData((prevData) => ({
+                        ...prevData,
+                        tags: [...prevData.tags, selectedTag],
+                    }));
+                } else {
+                    setArticleData((prevData) => ({
+                        ...prevData,
+                        tags: prevData.tags.filter(tag => tag.name !== name),
+                    }));
+                }
             }
         } else if (type === 'file') {
             const file = files[0];
@@ -103,7 +108,6 @@ function ArticleForm() {
             }));
             setFileInput(file.name);
         } else {
-            // Converti categoryId da stringa a numero
             const numericValue = name === 'category' ? parseInt(value) : value;
             setArticleData((prevData) => ({
                 ...prevData,
@@ -174,7 +178,7 @@ function ArticleForm() {
                 </FormGroup>
 
                 <FormGroup tag="fieldset">
-                    <Label>Tag</Label>
+                    <legend>Tag</legend>
                     <Row>
                         {tagOptions.map((tag) => (
                             <Col key={tag.id} sm={4}>
@@ -183,7 +187,7 @@ function ArticleForm() {
                                         <Input
                                             type="checkbox"
                                             name={tag.name}
-                                            checked={articleData.tags[tag.name] || false}
+                                            checked={articleData.tags.some(t => t.id === tag.id)}
                                             onChange={handleChange}
                                         />
                                         {tag.name}
@@ -208,6 +212,13 @@ function ArticleForm() {
                     Aggiungi Articolo
                 </Button>
             </Form>
+
+            {showAlert && (
+                <div className="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    Post pubblicato con successo!
+                    <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close" onClick={() => setShowAlert(false)}></button>
+                </div>
+            )}
 
             <ArticleList articles={articles} removeArticle={removeArticle} />
         </>
